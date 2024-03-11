@@ -103,20 +103,27 @@ namespace OpenInNvim
 
             var options = package.GetDialogPage(typeof(OptionGeneral)) as OptionGeneral;
 
-            string target = $"{dte?.ActiveDocument?.FullName}" ?? ".";
             // Parsing in `nvim -- "file_name_with_spaces"` confuses the `Arguments` Parameter of the ProcessStartInfo. Thus we let the start args generate the parameter at runtime at store it temporarily in a file.
-            File.WriteAllText("neovim_targets.txt", target);
+            File.WriteAllText("neovim_targets.txt", dte?.ActiveDocument?.FullName ?? ".");
             
-            Process terminal = new Process
+            // Do not launch neovim if there is no target.
+            if (String.IsNullOrEmpty(dte?.Solution?.FileName))
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = options.TerminalPath,
-                    WorkingDirectory = Directory.GetParent(dte?.Solution?.FileName ?? "C:\\").FullName,
-                    Arguments = "Get-Content neovim_targets.txt | % { nvim $_ }"
-                }
+                return;
+            }
+
+            // Create process start info.
+            var terminalStartInfo = new ProcessStartInfo
+            {
+                FileName = options.TerminalPath,
+                WorkingDirectory = Directory.GetParent(dte.Solution.FileName).FullName,
+                Arguments = "Get-Content neovim_targets.txt | % { nvim $_ }",
             };
 
+            // Create Process
+            var terminal = new Process { StartInfo = terminalStartInfo };
+
+            // Run process
             terminal.Start();
             terminal.WaitForExit();
         }
