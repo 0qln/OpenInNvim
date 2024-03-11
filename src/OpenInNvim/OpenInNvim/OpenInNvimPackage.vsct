@@ -56,7 +56,7 @@
         <Parent guid="guidOpenInNvimPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages" id="bmpPic1" />
         <Strings>
-          <ButtonText>Invoke OpenInNvim</ButtonText>
+          <ButtonText>Open in Neovim</ButtonText>
         </Strings>
       </Button>
     </Buttons>
