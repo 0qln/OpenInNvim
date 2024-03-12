@@ -13,6 +13,7 @@ using Task = System.Threading.Tasks.Task;
 using System.Windows.Forms;
 using System.IO;
 using Microsoft.VisualStudio.Threading;
+using System.Runtime.InteropServices;
 
 namespace OpenInNvim
 {
@@ -61,18 +62,23 @@ namespace OpenInNvim
             private set;
         }
 
+        /// <summary>
+        /// The current DTE instance.
+        /// </summary>
         private static DTE dte { get; set; }
 
         /// <summary>
         /// Gets the service provider from the owner package.
         /// </summary>
-        private Microsoft.VisualStudio.Shell.IAsyncServiceProvider ServiceProvider
-        {
-            get
-            {
-                return this.package;
-            }
-        }
+        private Microsoft.VisualStudio.Shell.IAsyncServiceProvider ServiceProvider => package;
+
+        /// <summary>
+        /// Provide a nice way to the access current configuration.
+        /// </summary>
+        /// <typeparam name="TDialogPage"></typeparam>
+        /// <returns></returns>
+        private TDialogPage Settings<TDialogPage>() where TDialogPage : DialogPage
+            => package.GetDialogPage(typeof(TDialogPage)) as TDialogPage;
 
         /// <summary>
         /// Initializes the singleton instance of the command.
@@ -101,8 +107,6 @@ namespace OpenInNvim
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            var options = package.GetDialogPage(typeof(OptionGeneral)) as OptionGeneral;
-
             // Parsing in `nvim -- "file_name_with_spaces"` confuses the `Arguments` Parameter of the ProcessStartInfo. Thus we let the start args generate the parameter at runtime at store it temporarily in a file.
             File.WriteAllText("neovim_targets.txt", dte?.ActiveDocument?.FullName ?? ".");
             
@@ -115,18 +119,26 @@ namespace OpenInNvim
             // Create process start info.
             var terminalStartInfo = new ProcessStartInfo
             {
-                FileName = options.TerminalPath,
+                FileName = Settings<Options.General>().TerminalPath,
                 WorkingDirectory = Directory.GetParent(dte.Solution.FileName).FullName,
                 Arguments = "Get-Content neovim_targets.txt | % { nvim $_ }",
             };
 
-            // Create Process
+            // Create process.
             var terminal = new Process { StartInfo = terminalStartInfo };
 
-            // Run process
+            // Run process.
             terminal.Start();
-            terminal.WaitForExit();
-        }
+            
+            // Minimize windows
+            if (Settings<Options.Windows>().MinimizeVSWindows)
+            {
+                dte.DTE.Application.MainWindow.WindowState = vsWindowState.vsWindowStateMinimize;
 
+                foreach (Window window in dte.DTE.Application.Windows) {
+                    window.WindowState = vsWindowState.vsWindowStateMinimize;
+                }
+            }
+        }
     }
 }

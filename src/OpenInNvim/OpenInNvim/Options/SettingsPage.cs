@@ -13,28 +13,24 @@ using System.Threading;
 using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 
-namespace OpenInNvim
+namespace OpenInNvim.Options
 {
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    [Guid(OptionsPage.PackageGuidString)]
-    [ProvideOptionPage(typeof(OptionGeneral), 
-        "Open In Neovim", "General", 0, 0, true)]
-    public sealed class OptionsPage : AsyncPackage
+    [Guid(SettingsPage.PackageGuidString)]
+    [ProvideOptionPage(typeof(General), "Open In Neovim", "General", 0, 0, true)]
+    [ProvideOptionPage(typeof(Windows), "Open In Neovim", "Windows", 0, 0, true)]
+    public sealed class SettingsPage : AsyncPackage
     {
         /// <summary>
         /// OptionsPage GUID string.
         /// </summary>
         public const string PackageGuidString = "41bf1714-efd5-4c00-9596-9ebd3de05c0c";
 
-        public string TerminalPath
-        {
-            get
-            {
-                OptionGeneral page = (OptionGeneral)GetDialogPage(typeof(OptionGeneral));
-                return page.TerminalPath;
-            }
-        }
+        private TPage GetPage<TPage>() where TPage : DialogPage => GetDialogPage(typeof(TPage)) as TPage;
+
+        public string TerminalPath => GetPage<General>().TerminalPath;
+        public Boolean MinimizeVSWindows => GetPage<Windows>().MinimizeVSWindows;
 
 
         #region Package Members

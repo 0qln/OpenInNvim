@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OpenInNvim
+namespace OpenInNvim.Options
 {
-    public class OptionGeneral : DialogPage
+    public class General : DialogPage
     {
         private string _terminalPath = "powershell.exe";
 
